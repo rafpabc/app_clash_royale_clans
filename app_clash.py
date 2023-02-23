@@ -1,3 +1,16 @@
+# Here we are going to do a simple request using the Clash Royale API to retrieve info about the top 10 clans in all the 
+# countries in which there are teams registered.
+
+# The call will give us info for one country at a time. Though I could retreieve info for all countries at once, 
+# that would be to much info to display at once in a single table. Instead, we are going to input the country in 
+# which we are interested first and, then, the app will output the info about that location.
+
+# Also, by the end, we are going to configure a simple dash app, which will display the info we have scripted. 
+# A user friendly solution to retrieve the info about the clans for the non-tech user.
+
+#### First. Import Modules.
+#These are the packages we are going to need to make our script work. 
+
 import requests
 import pandas as pd
 import plotly.graph_objects as go
@@ -5,6 +18,11 @@ import dash
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
+
+#########
+
+#Second. First API Call
+#Get all possible locations in CLash Royale.
 
 
 url_loc = "https://proxy.royaleapi.dev/v1/locations"
