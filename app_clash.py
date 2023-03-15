@@ -15,9 +15,9 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 import dash
-import dash_html_components as html
-import dash_core_components as dcc
-from dash.dependencies import Input, Output, State
+from dash import html
+from dash import dcc
+from dash.dependencies import Input, Output
 
 #########
 
@@ -41,34 +41,78 @@ for i in locations_clash_countr["id"]:
     clan_info = pd.json_normalize(response.json()["items"])
     all_clans = pd.concat([all_clans,clan_info])
 
+all_clans["location.name"] = all_clans["location.name"].str.lower()
+
+def availability(df):
+    available_clans = df[(df["members"]<50)]
+    return available_clans
+
+# def top_clans(all_clans):
+#     all_clans_filtered = all_clans[(all_clans["location.name"]==country)].head(10)
+#     return all_clans_filtered
+
+
+
 app = dash.Dash(__name__)
 
 app.layout = html.Div(children=[html.H1("Top 10 clans by country",
                                 style={'textAlign': 'center', 'color': '#503D36', 'font-size': 40}),
-                                html.Div(["Input Country's Name", dcc.Input(id="input-country",value=" ",type="text",
+                                html.Div(["Input Country's Name",
+                                dcc.Dropdown(id="input-country",
+                                          options=locations_clash_countr["name"].tolist(),
+                                          value=" ",
+                                          placeholder = "Select a Country",
                                 style={'height':'50px','font-size':35}),],
                                 style={'font-size':40}),
+                                html.Div(["Check for clans with less than 50 members",
+                                dcc.Dropdown(id="input-members",
+                                            options=[{'label':'YES','value':'YES'},
+                                                        {'label':'NO','value':'NO'}],
+                                            value=['YES']),
+    
+                                ]
+                                ),
                                 html.Br(),
                                 html.Br(),
                                 html.Div(dcc.Graph(id="top10-table")),
+                                html.Div(id="test"),
                                 ])
 
 # add callback decorator
 
-@app.callback(Output(component_id='top10-table',component_property='figure'),\
-    Input(component_id='input-country',component_property='value'))
+@app.callback([Output(component_id='top10-table',component_property='figure'),
+               Output(component_id='test',component_property='children')],
+    [
+    Input(component_id='input-country',component_property='value'),
+     Input(component_id='input-members',component_property='value')]
+    )
 
-def top10clans(country):
-    all_clans["location.name"] = all_clans["location.name"].str.lower()
+def top10clans(country,members):
     country = country.lower()
-    all_clans_filtered = all_clans[all_clans["location.name"]==country].head(10)
-    fig = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore"]),
-                 cells=dict(values=[all_clans_filtered["tag"],
-                 all_clans_filtered["name"],
-                 all_clans_filtered["clanScore"]]))])
-    
-    fig.update_layout(title="Top 10 clans in "+str(country))
-    return fig
+
+    df = all_clans[(all_clans["location.name"]==country)]
+
+    if members == 'YES':
+        available_clans_filtered = availability(df).head(15)
+        fig_available = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
+                    cells=dict(values=[available_clans_filtered["tag"],
+                    available_clans_filtered["name"],
+                    available_clans_filtered["clanScore"],
+                    available_clans_filtered["members"]]))])
+        fig_available.update_layout(title="Top 10 clans in "+str(country))
+
+        return [fig_available,members]
+    else:
+        df = df.head(15)
+        fig_all = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
+                    cells=dict(values=[df["tag"],
+                    df["name"],
+                    df["clanScore"],
+                    df["members"]]))])
+        fig_all.update_layout(title="Top 10 clans in "+str(country))
+        return [fig_all,members]
+
+
 
 #Run the app
 if __name__ == '__main__':
