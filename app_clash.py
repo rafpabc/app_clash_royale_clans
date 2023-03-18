@@ -62,26 +62,22 @@ app.layout = html.Div(children=[html.H1("Top 10 clans by country",
                                           options=locations_clash_countr["name"].tolist(),
                                           value=" ",
                                           placeholder = "Select a Country",
-                                style={'height':'50px','font-size':35}),],
-                                style={'font-size':40}),
+                                style={'opacity':0.5})]),
                                 html.Div(["Check for clans with less than 50 members",
                                 dcc.Dropdown(id="input-members",
                                             options=[{'label':'YES','value':'YES'},
                                                         {'label':'NO','value':'NO'}],
-                                            value=['YES']),
-    
-                                ]
-                                ),
+                                            value=['YES'],
+                                            style={'opacity':0.5})]),
                                 html.Br(),
                                 html.Br(),
-                                html.Div(dcc.Graph(id="top10-table")),
-                                html.Div(id="test"),
-                                ])
+                                html.Div(children = html.Div([dcc.Graph(id="top10-table")]))
+                                ],
+                                style={'background-image':'url(https://c4.wallpaperflare.com/wallpaper/415/210/511/clash-royale-supercell-clash-of-clans-prince-wallpaper-preview.jpg)'})
 
 # add callback decorator
 
-@app.callback([Output(component_id='top10-table',component_property='figure'),
-               Output(component_id='test',component_property='children')],
+@app.callback([Output(component_id='top10-table',component_property='figure')],
     [
     Input(component_id='input-country',component_property='value'),
      Input(component_id='input-members',component_property='value')]
@@ -100,8 +96,11 @@ def top10clans(country,members):
                     available_clans_filtered["clanScore"],
                     available_clans_filtered["members"]]))])
         fig_available.update_layout(title="Top 10 clans in "+str(country))
+        fig_available.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'})
+        go.layout.Activeshape(opacity=0.2)
+        
 
-        return [fig_available,members]
+        return [fig_available]
     else:
         df = df.head(15)
         fig_all = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
@@ -110,7 +109,8 @@ def top10clans(country,members):
                     df["clanScore"],
                     df["members"]]))])
         fig_all.update_layout(title="Top 10 clans in "+str(country))
-        return [fig_all,members]
+        fig_all.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'})
+        return [fig_all]
 
 
 
