@@ -2,3 +2,5 @@ requests
 dash
 pandas
 plotly.graph_objects
+plotly
+gunicorn

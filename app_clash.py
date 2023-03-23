@@ -54,6 +54,7 @@ def availability(df):
 
 
 app = dash.Dash(__name__)
+server = app.server
 
 app.layout = html.Div([html.Img(src=app.get_asset_url('clashroyale.png'),
                                          style={'max-width':'40%','height':'auto','margin-left':'auto','margin-right':'auto',
