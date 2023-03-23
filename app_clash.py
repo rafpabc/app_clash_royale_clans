@@ -36,12 +36,12 @@ locations_clash_countr = locations_clash[locations_clash["isCountry"] == True].r
 all_clans = pd.DataFrame()
 
 for i in locations_clash_countr["id"]:
-    url_clan_info = "https://proxy.royaleapi.dev/v1/locations/"+str(i)+"/rankings/clans?limit=100"
+    url_clan_info = "https://proxy.royaleapi.dev/v1/locations/"+str(i)+"/rankings/clans?limit=120"
     response = requests.get(url_clan_info, headers=headers)
     clan_info = pd.json_normalize(response.json()["items"])
     all_clans = pd.concat([all_clans,clan_info])
 
-all_clans["location.name"] = all_clans["location.name"].str.lower()
+#all_clans["location.name"] = all_clans["location.name"].str.lower()
 
 def availability(df):
     available_clans = df[(df["members"]<50)]
@@ -84,6 +84,18 @@ app.layout = html.Div([html.Img(src=app.get_asset_url('clashroyale.png'),
                                             dcc.Dropdown(id="input-members",
                                                     options=[{'label': html.Span('<50 members',style={'color':'black','font-size': '1vw'}),'value':'YES'},
                                                             {'label':html.Span('ALL',style={'color':'black','font-size': '1vw'}),'value':'NO'}],
+                                                    placeholder = "Select an Option"),
+                                            
+                                            html.H2("Pick List's Length",
+                                            style={'textAlign': 'left', 'color': '#FFFFFF',
+                                                'font-family': 'Arial','font-size': '1vw',
+                                                'padding':'10px'}),
+
+                                            dcc.Dropdown(id="input-number",
+                                                    options=[{'label': html.Span('10',style={'color':'black','font-size': '1vw'}),'value':10},
+                                                            {'label':html.Span('20',style={'color':'black','font-size': '1vw'}),'value':20},
+                                                            {'label':html.Span('50',style={'color':'black','font-size': '1vw'}),'value':50},
+                                                            {'label':html.Span('100',style={'color':'black','font-size': '1vw'}),'value':100}],
                                                     placeholder = "Select an Option")],
                                                     style={'width':'30%',
                                                            'height':'1px',
@@ -93,17 +105,18 @@ app.layout = html.Div([html.Img(src=app.get_asset_url('clashroyale.png'),
                                                     style={'textAlign': 'left', 'color': '#FFFFFF',
                                                         'font-family': 'Arial','font-size': '2vw',
                                                         'padding':'10px'}),
-                                          dcc.Graph(id="top10-table",responsive=True),
+                                          dcc.Graph(id="top10-table",responsive=True,
+                                                    style={'height':'85vh'}),
                                           html.Br()],
-                                         style={'width':'70%'})],
+                                         style={'width':'70%',
+                                                'display':'block'})],
                                 
                             style={'display':'flex'})],
-                        style={'background-image':'url(https://clashroyale.com/uploaded-images-blog/974003312_1609855333.jpg)',
+                        style={'background-image':'url(assets/fondo_app_cr.jpg)',
                             'background-size':'cover',
                             'background-position': 'center center',
                             'background-attachment': 'fixed',
-                            'width':'95%',
-                            'height':'720px'})
+                            'width':'95%'})
 
 # add callback decorator
 
@@ -111,38 +124,59 @@ app.layout = html.Div([html.Img(src=app.get_asset_url('clashroyale.png'),
                Output(component_id='top10-table',component_property='figure')],
     [
     Input(component_id='input-country',component_property='value'),
-     Input(component_id='input-members',component_property='value')]
+     Input(component_id='input-members',component_property='value'),
+     Input(component_id='input-number',component_property='value')]
     )
 
-def top10clans(country,members):
-    country = country.lower()
+def top10clans(country,members,number):
+    #country = country.lower()
 
     df = all_clans[(all_clans["location.name"]==country)]
 
     country_pick = "Top clans in "+str(country)
 
     if members == 'YES':
-        available_clans_filtered = availability(df).head(15)
+        available_clans_filtered = availability(df).head(number)
         fig_available = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
                     cells=dict(values=[available_clans_filtered["tag"],
                     available_clans_filtered["name"],
                     available_clans_filtered["clanScore"],
-                    available_clans_filtered["members"]]))])
+                    available_clans_filtered["members"]]))],
+                    layout = go.Layout(height=200,
+                                       margin=dict(
+                                                    l=50,
+                                                    r=50,
+                                                    b=100,
+                                                    t=20,
+                                                    pad=4
+                                                )
+                                       ))
         #fig_available.update_layout(title="Top clans in "+str(country),title_font_family="Arial")
         fig_available.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'})
+        fig_available.update_layout(template="none")
 
         
 
         return [country_pick,fig_available]
     else:
-        df = df.head(15)
+        df = df.head(number)
         fig_all = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
                     cells=dict(values=[df["tag"],
                     df["name"],
                     df["clanScore"],
-                    df["members"]]))])
+                    df["members"]]))],
+                    layout = go.Layout(height=500,
+                                       margin=dict(
+                                                    l=50,
+                                                    r=50,
+                                                    b=100,
+                                                    t=20,
+                                                    pad=4
+                                                )
+                                       ))
        # fig_all.update_layout(title="Top clans in "+str(country),title_font_family="Arial")
         fig_all.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'})
+        fig_all.update_layout(template="none")
 
 
         return [country_pick,fig_all]
