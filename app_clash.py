@@ -36,12 +36,12 @@ locations_clash_countr = locations_clash[locations_clash["isCountry"] == True].r
 all_clans = pd.DataFrame()
 
 for i in locations_clash_countr["id"]:
-    url_clan_info = "https://proxy.royaleapi.dev/v1/locations/"+str(i)+"/rankings/clans?limit=100"
+    url_clan_info = "https://proxy.royaleapi.dev/v1/locations/"+str(i)+"/rankings/clans?limit=120"
     response = requests.get(url_clan_info, headers=headers)
     clan_info = pd.json_normalize(response.json()["items"])
     all_clans = pd.concat([all_clans,clan_info])
 
-all_clans["location.name"] = all_clans["location.name"].str.lower()
+#all_clans["location.name"] = all_clans["location.name"].str.lower()
 
 def availability(df):
     available_clans = df[(df["members"]<50)]
@@ -55,85 +55,131 @@ def availability(df):
 
 app = dash.Dash(__name__)
 
-app.layout = html.Div(children=[html.Img(src=app.get_asset_url('clashroyale.png'),
+app.layout = html.Div([html.Img(src=app.get_asset_url('clashroyale.png'),
                                          style={'max-width':'40%','height':'auto','margin-left':'auto','margin-right':'auto',
                                                 'display': 'block'}),
-                                # html.H1("TOP 10 CLANS BY COUNTRY",
-                                #         style={'textAlign': 'center', 'color': '#FFD700',
-                                #                'font-family': 'Arial','font-size': '5vw',
-                                #                '-webkit-text-stroke-width': '1px', 
-                                #                '-webkit-text-stroke-color': 'white'}),
-                                 html.Div([html.H2("Input Country's Name",
+                            html.Div([
+                                 html.Div([html.Br(),
+                                           html.Br(),
+                                           html.Br(),
+                                           html.Br(),
+                                           html.H2("Input Country's Name",
                                                     style={'textAlign': 'left', 'color': '#FFFFFF',
-                                                        'font-family': 'Arial','font-size': '1.2vw',
-                                                        'padding':'8px','width':'50%'}),
-                                            html.H2("Check for Available Clans",
-                                        style={'textAlign': 'left', 'color': '#FFFFFF',
-                                            'font-family': 'Arial','font-size': '1.2vw',
-                                            'padding':'8px','width':'50%'})],
-                                        style={'display':'flex'}),
-                                html.Div([dcc.Dropdown(id="input-country",
+                                                        'font-family': 'Arial','font-size': '1vw',
+                                                        'padding':'10px'}),
+
+                                            dcc.Dropdown(id="input-country",
                                                     options=[{'label':html.Span(i,
-                                                                               style={'color':'black','font-size': '1.2vw'}),
+                                                                               style={'color':'black','font-size': '1vw'}),
                                                              'value':i}
                                                              for i in locations_clash_countr["name"].tolist()],
                                                     value=" ",
-                                                    placeholder = "Select a Country",
-                                                    style={'width':'95%'}),
-                                        dcc.Dropdown(id="input-members",
-                                                    options=[{'label': html.Span('<50 members',style={'color':'black','font-size': '1.2vw'}),'value':'YES'},
-                                                                {'label':html.Span('ALL',style={'color':'black','font-size': '1.2vw'}),'value':'NO'}],
-                                                    placeholder = "Select an Option",
-                                                    style={'width':'95%'})],
-                                        style={'display':'flex'}),
-                                html.Br(),
-                                html.Br(),
-                                html.Div(children = html.Div([dcc.Graph(id="top10-table")]))],
-                        style={'background-image':'url(https://clashroyale.com/uploaded-images-blog/974003312_1609855333.jpg)',
+                                                    placeholder = "Select a Country"),
+
+                                            html.H2("Check for Available Clans",
+                                                    style={'textAlign': 'left', 'color': '#FFFFFF',
+                                                        'font-family': 'Arial','font-size': '1vw',
+                                                        'padding':'10px'}),
+
+                                            dcc.Dropdown(id="input-members",
+                                                    options=[{'label': html.Span('<50 members',style={'color':'black','font-size': '1vw'}),'value':'YES'},
+                                                            {'label':html.Span('ALL',style={'color':'black','font-size': '1vw'}),'value':'NO'}],
+                                                    placeholder = "Select an Option"),
+                                            
+                                            html.H2("Pick List's Length",
+                                            style={'textAlign': 'left', 'color': '#FFFFFF',
+                                                'font-family': 'Arial','font-size': '1vw',
+                                                'padding':'10px'}),
+
+                                            dcc.Dropdown(id="input-number",
+                                                    options=[{'label': html.Span('10',style={'color':'black','font-size': '1vw'}),'value':10},
+                                                            {'label':html.Span('20',style={'color':'black','font-size': '1vw'}),'value':20},
+                                                            {'label':html.Span('50',style={'color':'black','font-size': '1vw'}),'value':50},
+                                                            {'label':html.Span('100',style={'color':'black','font-size': '1vw'}),'value':100}],
+                                                    placeholder = "Select an Option")],
+                                                    style={'width':'30%',
+                                                           'height':'1px',
+                                                           'padding':'12px'}),
+
+                                html.Div([html.Div(id="country-selected",
+                                                    style={'textAlign': 'left', 'color': '#FFFFFF',
+                                                        'font-family': 'Arial','font-size': '2vw',
+                                                        'padding':'10px'}),
+                                          dcc.Graph(id="top10-table",responsive=True,
+                                                    style={'height':'85vh'}),
+                                          html.Br()],
+                                         style={'width':'70%',
+                                                'display':'block'})],
+                                
+                            style={'display':'flex'})],
+                        style={'background-image':'url(assets/fondo_app_cr.jpg)',
                             'background-size':'cover',
                             'background-position': 'center center',
                             'background-attachment': 'fixed',
-                            'width':'95%',
-                            'margin':'auto',
-                            'padding':'0px',
-                            'border':'0px'})
+                            'width':'95%'})
 
 # add callback decorator
 
-@app.callback([Output(component_id='top10-table',component_property='figure')],
+@app.callback([Output(component_id='country-selected',component_property='children'),
+               Output(component_id='top10-table',component_property='figure')],
     [
     Input(component_id='input-country',component_property='value'),
-     Input(component_id='input-members',component_property='value')]
+     Input(component_id='input-members',component_property='value'),
+     Input(component_id='input-number',component_property='value')]
     )
 
-def top10clans(country,members):
-    country = country.lower()
+def top10clans(country,members,number):
+    #country = country.lower()
 
     df = all_clans[(all_clans["location.name"]==country)]
 
+    country_pick = "Top clans in "+str(country)
+
     if members == 'YES':
-        available_clans_filtered = availability(df).head(15)
+        available_clans_filtered = availability(df).head(number)
         fig_available = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
                     cells=dict(values=[available_clans_filtered["tag"],
                     available_clans_filtered["name"],
                     available_clans_filtered["clanScore"],
-                    available_clans_filtered["members"]]))])
-        fig_available.update_layout(title="Top 10 clans in "+str(country))
+                    available_clans_filtered["members"]]))],
+                    layout = go.Layout(height=200,
+                                       margin=dict(
+                                                    l=50,
+                                                    r=50,
+                                                    b=100,
+                                                    t=20,
+                                                    pad=4
+                                                )
+                                       ))
+        #fig_available.update_layout(title="Top clans in "+str(country),title_font_family="Arial")
         fig_available.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'})
-        go.layout.Activeshape(opacity=0.2)
+        fig_available.update_layout(template="none")
+
         
 
-        return [fig_available]
+        return [country_pick,fig_available]
     else:
-        df = df.head(15)
+        df = df.head(number)
         fig_all = go.Figure(data=[go.Table(header=dict(values=["tag","name","clanScore","members"]),
                     cells=dict(values=[df["tag"],
                     df["name"],
                     df["clanScore"],
-                    df["members"]]))])
-        fig_all.update_layout(title="Top 10 clans in "+str(country))
+                    df["members"]]))],
+                    layout = go.Layout(height=500,
+                                       margin=dict(
+                                                    l=50,
+                                                    r=50,
+                                                    b=100,
+                                                    t=20,
+                                                    pad=4
+                                                )
+                                       ))
+       # fig_all.update_layout(title="Top clans in "+str(country),title_font_family="Arial")
         fig_all.update_layout({'paper_bgcolor': 'rgba(0,0,0,0)'})
-        return [fig_all]
+        fig_all.update_layout(template="none")
+
+
+        return [country_pick,fig_all]
 
 
 
