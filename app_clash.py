@@ -113,7 +113,7 @@ app.layout = html.Div([html.Img(src=app.get_asset_url('clashroyale.png'),
                                                 'display':'block'})],
                                 
                             style={'display':'flex'})],
-                        style={'background-image':'url(assets/fondo_app_cr.jpg)',
+                        style={'background-image':'url('+app.get_asset_url('fondo_app_cr.jpg')+')',
                             'background-size':'cover',
                             'background-position': 'center center',
                             'background-attachment': 'fixed',
